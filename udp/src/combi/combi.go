@@ -1,12 +1,19 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net"
 	"time"
 )
 
-func broadcast_ip() {
+type elevator_addr struct {
+	id int
+	ip string
+}
+
+func broadcast_ip(id int) {
 	c, err := net.ListenPacket("udp", ":0")
 
 	if err != nil {
@@ -19,7 +26,7 @@ func broadcast_ip() {
 		log.Fatal(err)
 	}
 	for {
-		if _, err := c.WriteTo([]byte("hello"), dst); err != nil {
+		if _, err := c.WriteTo([]byte(string(id)), dst); err != nil {
 			log.Fatal(err)
 		}
 		time.Sleep(1000 * time.Millisecond)
@@ -38,14 +45,20 @@ func listenUDP() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(n, "bytes read from", peer, "saying", string(b[0:n]))
+		log.Println(n, "bytes read from", peer, "saying", b[0])
+		//TODO: Send the peer addr and data to our handler, and register the elevator
 	}
 }
 
 func main() {
-	go broadcast_ip()
+
+	idPtr := flag.Int("id", -1, "Elevator ID")
+	flag.Parse()
+	fmt.Println(*idPtr)
+
+	time.Sleep(1000 * time.Millisecond)
+	go broadcast_ip(*idPtr)
 	go listenUDP()
 
 	time.Sleep(100000 * time.Millisecond)
-
 }
