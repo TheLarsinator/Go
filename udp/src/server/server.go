@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 )
@@ -30,23 +31,21 @@ func sendResponse(conn *net.UDPConn, addr *net.UDPAddr) {
 }
 
 func main() {
-	p := make([]byte, 2048)
-	addr := net.UDPAddr{
-		Port: 30001,
-		IP:   net.ParseIP("192.168.1.35"),
-	}
-	ser, err := net.ListenUDP("udp", &addr)
+
+	c, err := net.ListenPacket("udp", ":8032")
 	if err != nil {
-		fmt.Printf("Some error %v\n", err)
-		return
+		log.Fatal(err)
 	}
+	defer c.Close()
 	for {
-		_, remoteaddr, err := ser.ReadFromUDP(p)
-		fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
+		b := make([]byte, 512)
+		n, peer, err := c.ReadFrom(b)
 		if err != nil {
-			fmt.Printf("Some error  %v", err)
-			continue
+			log.Fatal(err)
 		}
-		go sendResponse(ser, remoteaddr)
+		log.Println(n, "bytes read from", peer, "saying", string(b[0:n]))
+		/*if _, err := c.WriteTo(b[:n], peer); err != nil {
+			log.Fatal(err)
+		}*/
 	}
 }
