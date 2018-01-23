@@ -1,24 +1,26 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
+	"log"
 	"net"
+	"time"
 )
-
 func main() {
-	p := make([]byte, 2048)
-	conn, err := net.Dial("udp", "192.168.1.35:30001")
-	if err != nil {
-		fmt.Printf("Some error %v", err)
-		return
+		c, err := net.ListenPacket("udp", ":0")
+	
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer c.Close()
+
+		dst, err := net.ResolveUDPAddr("udp", "255.255.255.255:8032")
+		if err != nil {
+			log.Fatal(err)
+		}
+		for {
+			if _, err := c.WriteTo([]byte("hello"), dst); err != nil {
+			log.Fatal(err)
+			}
+			time.Sleep(1000 * time.Millisecond)
+		}
 	}
-	fmt.Fprintf(conn, "Hi UDP Server, How are you doing?")
-	_, err = bufio.NewReader(conn).Read(p)
-	if err == nil {
-		fmt.Printf("%s\n", p)
-	} else {
-		fmt.Printf("Some error %v\n", err)
-	}
-	conn.Close()
-}
